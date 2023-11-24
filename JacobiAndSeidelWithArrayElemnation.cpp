@@ -16,6 +16,7 @@ void jacobiIteration(double A[MAX_N][MAX_N], double b[MAX_N], double x[MAX_N], i
         double sum = 0.0;
         for (int j = 0; j < n; j++) {
             if (i != j) {
+                sum += A[i][j] * x[j];
             }
         }
         newX[i] = (b[i] - sum) / A[i][i];
@@ -49,7 +50,7 @@ bool hasConverged(double x[MAX_N], double prevX[MAX_N], int n, double Error)
     return true;
 }
 
-bool checkSolvability(double A[MAX_N][MAX_N], double b[MAX_N], int n)
+bool checkSolvability(double A[MAX_N][MAX_N], int n)
 {
     for (int i = 0; i < n; i++) {
         double absA = abs(A[i][i]);
@@ -71,18 +72,30 @@ void generateTable(double A[MAX_N][MAX_N], double b[MAX_N], double xJacobi[MAX_N
     int iterations = 0;
 
     cout << setprecision(4);
-    cout << "+----------+-----------+-----------+-----------+-----------+-----------+-----------+\n";
+    // cout << "+----------+-----------+-----------+-----------+-----------+-----------+-----------+\n";
+
+    cout << "+";
+    for (int j = 0; j <= 2 * (n); j++) {
+        cout << "----------+";
+    }
+    std::cout << std::endl;
 
     cout << "|" << left << setw(10) << "Iteration";
     for (int j = 0; j < n; j++) {
-        cout << left << "|" << setw(10) << " Jacobi x" + to_string(j + 1) << " ";
+        cout << left << "|" << setw(10) << " Jacobi x" + to_string(j + 1) << "";
     }
     for (int j = 0; j < n; j++) {
-        cout << left << "|" << setw(10) << " Seidel x" + to_string(j + 1) << " ";
+        cout << left << "|" << setw(10) << " Seidel x" + to_string(j + 1) << "";
     }
     cout << "|\n";
-    cout << "+----------+-----------+-----------+-----------+-----------+-----------+-----------+\n";
 
+    // cout << "+----------+-----------+-----------+-----------+-----------+-----------+-----------+\n";
+    cout << "+";
+    for (int j = 0; j <= 2 * (n); j++) {
+        cout << "----------+";
+    }
+
+    std::cout << std::endl;
     while (true) {
         cout << "|  " << setw(8) << iterations;
 
@@ -97,17 +110,22 @@ void generateTable(double A[MAX_N][MAX_N], double b[MAX_N], double xJacobi[MAX_N
         // Jacobi iteration
         jacobiIteration(A, b, xJacobi, n, Error);
         for (int j = 0; j < n; j++) {
-            cout << "| " << setw(10) << xJacobi[j];
+            cout << "|" << setw(10) << xJacobi[j];
         }
 
         // Gauss-Seidel iteration
         gaussSeidelIteration(A, b, xSeidel, n, Error);
         for (int j = 0; j < n; j++) {
-            cout << "| " << setw(10) << xSeidel[j];
+            cout << "|" << setw(10) << xSeidel[j];
         }
         cout << "|\n";
-        cout << "+----------+-----------+-----------+-----------+-----------+-----------+-----------+\n";
+        // cout << "+----------+-----------+-----------+-----------+-----------+-----------+-----------+\n";
 
+        cout << "+";
+        for (int j = 0; j <= 2 * (n); j++) {
+            cout << "----------+";
+        }
+        std::cout << std::endl;
         bool hasJacobiConverged = hasConverged(xJacobi, prevXJacobi, n, Error);
         bool hasSeidelConverged = hasConverged(xSeidel, prevXSeidel, n, Error);
 
@@ -116,29 +134,13 @@ void generateTable(double A[MAX_N][MAX_N], double b[MAX_N], double xJacobi[MAX_N
         }
 
         iterations++;
-    }
-}
-void solveWithElemnation(double A[MAX_N][MAX_N], double B[MAX_N])
-{
-    for (int i = 0; i < 2; i++) {
-        for (int k = i + 1; k < 3; k++) {
-            double t = A[k][i] / A[i][i];
-            for (int j = i; j < 3; j++) {
-                A[k][j] = A[k][j] - t * A[i][j];
-            }
-            B[k] = B[k] - t * B[i];
-        }
-    }
 
-    double X[MAX_N];
-    X[2] = B[2] / A[2][2];
-    X[1] = (B[1] - A[1][2] * X[2]) / A[1][1];
-    X[0] = (B[0] - A[0][1] * X[1] - A[0][2] * X[2]) / A[0][0];
+        // break loop #for testing
 
-    double X1 = X[0];
-    double X2 = X[1];
-    double X3 = X[2];
-    std::cout << " X1 = " << X1 << ",\n X2 = " << X2 << ",\n X3 = " << X3 << std::endl;
+        // if (iterations == 70) {
+        //     return;
+        // }
+    }
 }
 
 void rearrangeAndSolve(double A[MAX_N][MAX_N], double B[MAX_N], double xJacobi[MAX_N], double xSeidel[MAX_N], int n, double Error)
@@ -147,9 +149,10 @@ void rearrangeAndSolve(double A[MAX_N][MAX_N], double B[MAX_N], double xJacobi[M
     for (int i = 0; i < n; i++) {
         equationOrder[i] = i;
     }
-
+    bool JacobiSeidel = false;
     double rearrangedA[MAX_N][MAX_N];
     double rearrangedB[MAX_N];
+
     do {
         // rearranging
 
@@ -161,30 +164,32 @@ void rearrangeAndSolve(double A[MAX_N][MAX_N], double B[MAX_N], double xJacobi[M
             rearrangedB[i] = B[rearrangedIndex];
         }
 
-        if (checkSolvability(rearrangedA, rearrangedB, n)) {
+        if (checkSolvability(rearrangedA, n)) {
             generateTable(rearrangedA, rearrangedB, xJacobi, xSeidel, n, Error);
-            return;
-        } else {
-            cout << "The given system of equations cannot be solved even after rearranging the equations. \n";
-            cout << "\nthe Solution using Gauss elimination method \n";
-
-            solveWithElemnation(A, B);
+            JacobiSeidel = true;
             return;
         }
 
     } while (next_permutation(equationOrder, equationOrder + n));
+
+    if (!JacobiSeidel) {
+
+        generateTable(A, B, xJacobi, xSeidel, n, Error);
+    }
 }
 
 int main()
 {
-    double Error = 0.001;
+    double Error = 0.01;
     int N;
-    // int N = 3;
     cout << "Enter the matrix dimension (n): ";
     cin >> N;
 
     double A[MAX_N][MAX_N];
     double b[MAX_N];
+
+    double xJacobi[MAX_N] = { 0.0 };
+    double xSeidel[MAX_N] = { 0.0 };
 
     cout << "Enter the matrix elements:" << endl;
     for (int i = 0; i < N; i++) {
@@ -194,8 +199,14 @@ int main()
         }
     }
 
-    double xJacobi[MAX_N] = { 0.0 };
-    double xSeidel[MAX_N] = { 0.0 };
+    cout << "Enter the RHS vector:" << endl;
+    for (int i = 0; i < N; i++) {
+        cout << "b[" << i << "]: ";
+        cin >> b[i];
+    }
+
+    // --------------------------------------------
+    // int N = 2;
     // double A[MAX_N][MAX_N] = {
     //     { 2, -3, 0 },
     //     { 1, 3, -10 },
@@ -203,12 +214,6 @@ int main()
     // };
     //
     // double b[MAX_N] = { -7, 9, 13 };
-
-    cout << "Enter the RHS vector:" << endl;
-    for (int i = 0; i < N; i++) {
-        cout << "b[" << i << "]: ";
-        cin >> b[i];
-    }
 
     rearrangeAndSolve(A, b, xJacobi, xSeidel, N, Error);
 
